@@ -7,7 +7,9 @@ const PORT = process.env.PORT || 5000;
 const router = require("./router");
 const app = express();
 const server = http.createServer(app);
+const {usersByRoomMap} = require('./handlers/userHandlers')
 
+const userBySoketMap = {}
 
 const io = socketio(server, {
     cors: {
@@ -20,19 +22,21 @@ const registerUserHandlers = require('./handlers/userHandlers.js')
 io.on("connection", (socket) => {
 try {
     console.log("User connected: ", socket.id)
-
-    const {roomId, userId} = socket.handshake.query
+    
+    const {roomId} = socket.handshake.query
+    userBySoketMap[socket.id] = roomId
     socket.roomId = roomId
-    console.log(roomId)
-  
+   
     socket.join(roomId)
   
     registerUserHandlers(io, socket)
   
     socket.on('disconnect', () => {
         console.log('User disconnected', socket.id)
-        
-        socket.leave(roomId)
+        const roomId = userBySoketMap[socket.id]
+        if(roomId) {
+            socket.leave(roomId)
+        }
     })
 } catch (error) {
     console.log(error)
