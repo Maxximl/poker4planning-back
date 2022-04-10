@@ -73,8 +73,8 @@ module.exports = (io, socket) => {
               const user = usersInRoom[userId]
               user.coveredState = shown
             }
-            getUsers()
           }
+          getUsers()
         }
       }
 
