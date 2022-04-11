@@ -62,6 +62,10 @@ module.exports = (io, socket) => {
           usersInRoom[userId].online = false
         }
        }
+       const onlineUsers = Object.values(usersInRoom)
+       if(!onlineUsers.length) {
+        delete  usersByRoomMap[roomId] 
+       }
         getRoomData()
       }
   
