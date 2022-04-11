@@ -1,117 +1,132 @@
 // нормализованная структура
 // имитация БД
 const usersByRoomMap = {}
+// const usersByRoomMap = {
+//  roomId: {
+      // userId: {
+      //   userName: 'fdf'
+      // }
+// }
+// }
 
 module.exports.usersByRoomMap = usersByRoomMap
 
 module.exports = (io, socket) => {
   
+  const getDataInRoom = () => {
+    const roomData = usersByRoomMap[roomId]
+    const {playersArray, taskName, shown} = roomData || {}
+  }
 
     try {
       const {roomId} = socket
+      const roomData = usersByRoomMap[roomId]
+      const {usersInRoom, taskName, shown} = roomData || {}
 
-      const getRoomUsers = () => {
-        const users = usersByRoomMap[roomId]
-        return users
-      }
 
-      const getUsers = () => {
-        const users = usersByRoomMap[roomId]
+      const getRoomData = () => {
+        const roomData = usersByRoomMap[roomId]
+        const {usersInRoom, taskName, shown} = roomData || {}
 
-        const userArray = Object.values(users || {}) || []
-        io.in(socket.roomId).emit('players', userArray)
+        const playersArray = Object.values(usersInRoom || {}) || []
+        io.in(socket.roomId).emit('roomData', {playersArray, taskName, shown})
       }
     
 
       const addUser = ({ userName, userId }) => {
-        const users = usersByRoomMap[roomId]
-      if(users) {
-        if (!users[userId]) {
-          users[userId] = { userName, userId, roomId, online: true }
+        const roomData = usersByRoomMap[roomId]
+        const {usersInRoom, taskName, shown} = roomData || {}
+
+      if(usersInRoom) {
+        if (!usersInRoom[userId]) {
+          usersInRoom[userId] = { userName, userId, roomId, online: true }
         } else {
-          users[userId] = {userName, userId, roomId, online: true}
+          usersInRoom[userId] = {...usersInRoom[userId], userName, userId, roomId, online: true}
         }
       } else {
-        const usersInRoom = {}
-        usersInRoom[userId] = { userName, userId, roomId, online: true }
+        const usersInRoomNew = {}
+        usersInRoomNew[userId] = { userName, userId, roomId, online: true }
 
-        usersByRoomMap[roomId] = usersInRoom   
+        usersByRoomMap[roomId] = {usersInRoom: usersInRoomNew}   
       }
 
-        getUsers()
+        getRoomData()
       }
     
       const removeUser = (userId) => {
-        const usersInRoom = getRoomUsers()
+        const roomData = usersByRoomMap[roomId]
+        const {usersInRoom, taskName, shown} = roomData || {}
 
        if(usersInRoom) {
         if(usersInRoom[userId]) {
           usersInRoom[userId].online = false
         }
        }
-        getUsers()
+        getRoomData()
       }
   
       const setVote = ({userId, value}) => {
-        const usersInRoom = getRoomUsers()
+        const roomData = usersByRoomMap[roomId]
+        const {usersInRoom, taskName, shown} = roomData || {}
 
         if(usersInRoom) {
           if(usersInRoom[userId]) {
             usersInRoom[userId].value = value
           }
-          getUsers()
+          getRoomData()
         }
       }
   
-      const setShownState = (shown) => {
-        const usersInRoom = getRoomUsers()
+      const setShownState = (shownState) => {
+        const roomData = usersByRoomMap[roomId]
+        const {usersInRoom, taskName, shown} = roomData || {}
+
         if(usersInRoom) {
           const usersArray = Object.values(usersInRoom)
           
-          if(usersArray.every(user => user.value) || !shown) {
-            for(const userId in usersInRoom) {
-              const user = usersInRoom[userId]
-              user.coveredState = shown
-            }
+          if(usersArray.every(user => user.value) || !shownState) {
+            roomData.shown = shownState
           }
-          getUsers()
+          getRoomData()
         }
       }
 
-      const setTaskName = (taskName) => {
-        const usersInRoom = usersByRoomMap[roomId]
-        
-        if(usersInRoom) {
-          for(const userId in usersInRoom) {
-            const user = usersInRoom[userId]
-            user.taskName = taskName
-          }
+      const setTaskName = (newTtaskName) => {
+        const roomData = usersByRoomMap[roomId]
 
-          getUsers()
+        if(roomData) {
+          roomData.taskName = newTtaskName
+
+          getRoomData()
         }
       }
   
       const removeVotes = () => {
-        const users = usersByRoomMap[roomId]
+        const roomData = usersByRoomMap[roomId]
+        const {usersInRoom, taskName, shown} = roomData || {}
 
-      if(users) {
-        for(const key in users) {
-          const user = users[key]
+      if(usersInRoom) {
+        for(const key in usersInRoom) {
+          const user = usersInRoom[key]
           user.value = ''
         }
-        getUsers()
+
+        getRoomData()
       }
       }
 
       const kickPlayer = (id) => {
-        const usersInRoom = getRoomUsers()
+        const roomData = usersByRoomMap[roomId]
+        const {usersInRoom, taskName, shown} = roomData || {}
+
         console.log("kick", id, usersInRoom)
         if(usersInRoom) {
           if(usersInRoom[id]) {
             usersInRoom[id].online = false
           }
         }
-        getUsers()
+
+        getRoomData()
       }
 
       const notificateAll = () => {
@@ -119,7 +134,7 @@ module.exports = (io, socket) => {
       }
     
       // регистрируем обработчики
-      socket.on('player:get', getUsers)
+      socket.on('room:get', getRoomData)
       socket.on('player:add', addUser)
       socket.on('player:leave', removeUser)
       socket.on('vote:set', setVote)
