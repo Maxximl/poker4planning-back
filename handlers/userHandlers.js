@@ -62,7 +62,7 @@ module.exports = (io, socket) => {
           usersInRoom[userId].online = false
         }
        }
-       const onlineUsers = Object.values(usersInRoom)
+       const onlineUsers = Object.values(usersInRoom).filter(u => u.online) 
        if(!onlineUsers.length) {
         delete  usersByRoomMap[roomId] 
        }
