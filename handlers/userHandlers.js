@@ -119,23 +119,24 @@ module.exports = (io, socket) => {
       }
       }
 
-      const kickPlayer = (id) => {
+      const notificatePlayer = (id) => {
         const roomData = usersByRoomMap[roomId]
         const {usersInRoom, taskName, shown} = roomData || {}
 
-        console.log("kick", id, usersInRoom)
         if(usersInRoom) {
-          if(usersInRoom[id]) {
-            usersInRoom[id].online = false
+          const user = usersInRoom[id]
+          if(user) {
+            // usersInRoom[id].online = false
+            io.in(socket.roomId).emit('notificate', user.userName)
           }
         }
 
         getRoomData()
       }
 
-      const notificateAll = () => {
-        io.in(socket.roomId).emit('notificate')
-      }
+      // const notificateAll = () => {
+      //   io.in(socket.roomId).emit('notificate')
+      // }
     
       // регистрируем обработчики
       socket.on('room:get', getRoomData)
@@ -145,8 +146,8 @@ module.exports = (io, socket) => {
       socket.on('covered:set', setShownState)
       socket.on('votes:remove', removeVotes)
       socket.on('taskName:set', setTaskName)
-      socket.on('player:kick', kickPlayer)
-      socket.on('all:notification', notificateAll)
+      socket.on('player:notificate', notificatePlayer)
+      // socket.on('all:notification', notificateAll)
     } catch (error) {
       console.log(error)
     }

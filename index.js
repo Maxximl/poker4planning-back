@@ -21,7 +21,6 @@ const registerUserHandlers = require('./handlers/userHandlers.js')
 
 io.on("connection", (socket) => {
 try {
-    console.log("User connected: ", socket.id)
     
     const {roomId} = socket.handshake.query
     userBySoketMap[socket.id] = roomId
@@ -32,7 +31,6 @@ try {
     registerUserHandlers(io, socket)
   
     socket.on('disconnect', () => {
-        console.log('User disconnected', socket.id)
         const roomId = userBySoketMap[socket.id]
         if(roomId) {
             socket.leave(roomId)
